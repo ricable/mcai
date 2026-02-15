@@ -216,6 +216,42 @@ Orders link customers to products with payment and fulfillment information. Comp
 - Shipment tracking information
 - Payment history and transaction records
 
+#### Order Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | integer | Unique order identifier |
+| id_customer | integer | Customer who placed the order |
+| id_cart | integer | Associated shopping cart |
+| id_currency | integer | Currency of the order |
+| id_language | integer | Language of the order |
+| id_shop | integer | Shop that processed order |
+| current_state | integer | Current order state ID |
+| payment | string | Payment method |
+| invoice_number | integer | Invoice reference number |
+| delivery_number | integer | Delivery/shipping reference |
+| valid | boolean | Order validity status |
+| date_add | datetime | Order creation timestamp |
+| date_upd | datetime | Last update timestamp |
+| shipping_number | string | Shipping tracking number |
+| total_paid | decimal | Total amount paid |
+| total_products | decimal | Total product value |
+| total_discounts | decimal | Total discounts applied |
+| total_shipping | decimal | Total shipping cost |
+
+#### Order States
+
+PrestaShop 1.7 defines standard order states:
+- **0 - Awaiting payment**: Order created but payment not received
+- **1 - Payment accepted**: Payment successfully processed
+- **2 - Processing in progress**: Order being prepared
+- **3 - Shipped**: Order dispatched to customer
+- **4 - Delivered**: Confirmed customer receipt
+- **5 - Canceled**: Order cancelled
+- **9 - Payment error**: Payment processing failed
+
+Each state can trigger automated actions and notifications.
+
 #### Order REST API Endpoints
 
 ```
@@ -323,6 +359,56 @@ POST   /api/configurations           # Create new configuration
 PUT    /api/configurations/{id}      # Update configuration
 DELETE /api/configurations/{id}      # Delete configuration
 ```
+
+### Warehouse
+
+Warehouses manage physical inventory locations (used with Stock Management):
+
+| Field | Description |
+|-------|-------------|
+| id_warehouse | Unique warehouse identifier |
+| name | Warehouse name/location |
+| address | Physical address |
+| city | City location |
+| postal_code | Postal/zip code |
+| country | Country code |
+| deleted | Soft-delete flag |
+
+### Supply Order
+
+Supply orders track inventory replenishment from suppliers:
+
+| Field | Description |
+|-------|-------------|
+| id_supply_order | Unique supply order identifier |
+| supplier_name | Supplier name |
+| id_supplier | Supplier entity ID |
+| id_warehouse | Destination warehouse |
+| reference | PO reference number |
+| date_delivery_expected | Expected arrival date |
+| total_te | Total tax-excluded amount |
+| total_with_tax | Total tax-included amount |
+| status | Order status (pending, received, canceled) |
+
+### Address
+
+Addresses store customer location information (delivery and billing):
+
+| Field | Description |
+|-------|-------------|
+| id_address | Unique address identifier |
+| id_customer | Associated customer |
+| alias | Address nickname (e.g., "Home", "Office") |
+| firstname | First name |
+| lastname | Last name |
+| company | Company name (optional) |
+| address1 | Street address line 1 |
+| address2 | Street address line 2 |
+| postcode | Postal/zip code |
+| city | City name |
+| id_country | Country identifier |
+| phone | Contact phone |
+| active | Whether address is active |
 
 ## Data Models and Relationships
 
@@ -578,6 +664,26 @@ GET /api/products/2?price[my_price][use_tax]=1&price[my_price][product_attribute
 ```
 
 This returns product with custom price calculated for specific combination and tax treatment.
+
+#### Pagination and Large Datasets
+
+When retrieving large result sets:
+- Use the `limit` parameter to control results per request (default usually 50)
+- Use `offset` parameter to retrieve subsequent pages: `?limit=50&offset=0`, `?limit=50&offset=50`, etc.
+- Always check total count in response to know total available items
+- For performance, retrieve only needed fields using `fields` parameter
+
+Example paginated request:
+```
+GET /api/products?limit=100&offset=200&fields=id,name,price,reference
+```
+
+#### Rate Limiting Considerations
+
+- API calls per second may be limited depending on PrestaShop configuration
+- Implement exponential backoff when receiving 429 (Too Many Requests) responses
+- Batch operations when possible to reduce total API calls
+- Cache frequently accessed data locally when safe to do so
 
 ### PHP Webservice Library
 
